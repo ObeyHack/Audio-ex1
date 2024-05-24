@@ -38,7 +38,7 @@ if __name__ == "__main__":
     try:
         with open(f"{cur_dir}/ids.txt", "r") as fp:
             lines = "".join(fp.readlines())
-        ids = ','.split(lines.split("\n")[0])
+        ids = (lines.split("\n")[0]).split(',')
         ids = [int(uid) for uid in ids]
     except:
         raise Exception("Invalid ID file, should contain a single line following: <id>,<id> format")
