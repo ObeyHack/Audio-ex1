@@ -39,7 +39,9 @@ def load_wav(abs_path: tp.Union[str, Path]) -> tp.Tuple[torch.Tensor, int]:
         waveform: torch.Tensor (float) of shape [1, num_channels]
         sample_rate: int, the corresponding sample rate
     """
-    raise NotImplementedError
+    waveform, sample_rate = ta.load(abs_path)
+    return waveform.cpu(), sample_rate
+
 
 
 def do_stft(wav: torch.Tensor, n_fft: int=1024) -> torch.Tensor:
@@ -54,7 +56,8 @@ def do_stft(wav: torch.Tensor, n_fft: int=1024) -> torch.Tensor:
 
     returns: torch.tensor of the shape (1, n_fft, *, 2) or (B, 1, n_fft, *, 2), where last dim stands for real/imag entries.
     """
-    raise NotImplementedError
+    stft = torch.stft(wav, n_fft=n_fft, onesided=False, hop_length=n_fft//4, win_length=n_fft, return_complex=False)
+    return stft
 
 
 def do_istft(spec: torch.Tensor, n_fft: int=1024) -> torch.Tensor:
@@ -71,7 +74,8 @@ def do_istft(spec: torch.Tensor, n_fft: int=1024) -> torch.Tensor:
 
     NOTE: you may need to use torch.view_as_complex.
     """
-    raise NotImplementedError
+    istft = torch.istft(spec, n_fft=n_fft, hop_length=n_fft//4, win_length=n_fft)
+    return istft
 
 
 def do_fft(wav: torch.Tensor) -> torch.Tensor:
@@ -85,7 +89,8 @@ def do_fft(wav: torch.Tensor) -> torch.Tensor:
 
     returns: corresponding FFT transformation considering ONLY POSITIVE frequencies, returned tensor should be of complex dtype.
     """
-    raise NotImplementedError
+    fft = torch.fft.rfft(wav)
+    return fft
 
 
 def plot_spectrogram(wav: torch.Tensor, n_fft: int=1024) -> None:
@@ -95,7 +100,9 @@ def plot_spectrogram(wav: torch.Tensor, n_fft: int=1024) -> None:
 
     wav: torch tensor of the shape (1, T) or (B, 1, T) for the batched case.
     """ 
-    raise NotImplementedError
+    stft = do_stft(wav, n_fft)
+    mag = torch.abs(stft)
+    plt.imshow(mag.squeeze(0).log2(), aspect='auto', origin='lower', cmap='inferno')
 
 
 def plot_fft(wav: torch.Tensor) -> None:
@@ -107,5 +114,7 @@ def plot_fft(wav: torch.Tensor) -> None:
 
     wav: torch tensor of the shape (1, T) or (B, 1, T) for the batched case.
     """ 
-    raise NotImplementedError
+    fft = do_fft(wav)
+    mag = torch.abs(fft)
+    plt.plot(mag.squeeze(0))
 
