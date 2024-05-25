@@ -118,7 +118,6 @@ def plot_spectrogram(wav: torch.Tensor, n_fft: int = 1024) -> None:
     stft = do_stft(wav, n_fft=n_fft)
     stft = torch.view_as_complex(stft)
     plt.imshow(torch.abs(stft).cpu().numpy(), aspect='auto', origin='lower')
-    plt.show()
 
 
 def plot_fft(wav: torch.Tensor) -> None:
@@ -132,6 +131,4 @@ def plot_fft(wav: torch.Tensor) -> None:
     """
     # plot wav
     # plot with pandas and not with plt
-
     plt.plot(torch.abs(do_fft(wav)).cpu().numpy())
-    plt.show()
