@@ -16,18 +16,30 @@ import numpy as np
 from general_utilities import *
 
 # --------------------------------------------------------------------------------------------------
-#     Part A        Part A        Part A        Part A        Part A        Part A        Part A    
+#     Part A        Part A        Part A        Part A        Part A        Part A        Part A
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # In this part we will get familiarized with the basic utilities defined in general_utilities
 # --------------------------------------------------------------------------------------------------
+
+def plot_ffts(signals, signals_name):
+    fig, axs = plt.subplots(len(signals), 1, figsize=(10, 10))
+    for i in range(len(signals)):
+        plt.sca(axs[i])
+        axs[i].set_title(f"FFT({signals_name[i]})")
+        axs[i].set_xlabel('Frequency (Hz)')
+        axs[i].set_ylabel('Magnitude')
+        plot_fft(signals[i])
+    # set title
+    fig.tight_layout()
+    plt.show()
 
 
 def self_check_fft_stft():
     """
     Q:
     1. create 1KHz and 3Khz sine waves, each of 3 seconds length with a sample rate of 16KHz.
-    2. In a single plot (3 subplots), plot (i) FFT(sine(1Khz)) (ii) FFT(sine(3Khz)), 
-       (iii) FFT(sine(1Khz) + sine(3Khz)), make sure X axis shows frequencies. 
+    2. In a single plot (3 subplots), plot (i) FFT(sine(1Khz)) (ii) FFT(sine(3Khz)),
+       (iii) FFT(sine(1Khz) + sine(3Khz)), make sure X axis shows frequencies.
        Use general_utilities.plot_fft
     3. concatate [sine(1Khz), sine(3Khz), sine(1Khz) + sine(3Khz)] along the temporal axis, and plot
        the corresponding MAGNITUDE STFT using n_fft=1024. Make sure Y ticks are frequencies and X
@@ -35,14 +47,31 @@ def self_check_fft_stft():
 
     Include all plots in your PDF
     """
-    raise NotImplementedError
+    # create 1KHz and 3KHz sine waves
+    fs = 16000
+    signal_length = 3
+    sine_1Khz = create_single_sin_wave(1000, signal_length, fs)
+    sine_3Khz = create_single_sin_wave(3000, signal_length, fs)
+    sine_1Khz_3Khz = sine_1Khz + sine_3Khz
+
+    # plot FFT - 3 subplots
+    waves = [sine_1Khz, sine_3Khz, sine_1Khz_3Khz]
+    names = ['sine(1Khz)', 'sine(3Khz)', 'sine(1Khz) + sine(3Khz)']
+    plot_ffts(waves, names)
+
+    # plot STFT
+    n_fft = 1024
+    wav = torch.cat([sine_1Khz, sine_3Khz, sine_1Khz_3Khz], dim=-1)
+    plot_spectrogram(wav, n_fft=n_fft)
+    plt.title('STFT of [sine(1Khz), sine(3Khz), sine(1Khz) + sine(3Khz)]')
+    plt.show()
 
 
 def audio_check_fft_stft():
     """
     Q:
     1. load all phone_*.wav files in increasing order (0 to 11)
-    2. In a single plot (2 subplots), plot (i) FFT(phone_1.wav) (ii) FFT(phone_2.wav). 
+    2. In a single plot (2 subplots), plot (i) FFT(phone_1.wav) (ii) FFT(phone_2.wav).
        Use general_utilities.plot_fft
     3. concatate all phone_*.wav files in increasing order (0 to 11) along the temporal axis, and plot
        the corresponding MAGNITUDE STFT using n_fft=1024. Make sure Y ticks are frequencies and X
@@ -50,11 +79,25 @@ def audio_check_fft_stft():
 
     Include all plots in your PDF
     """
-    raise NotImplementedError
+    # load all phone_*.wav files
+    waves = []
+    for i in range(12):
+        wave, _ = load_wav(f'audio_files/phone_digits_8k/phone_{0}.wav')
+        waves.append(wave)
+
+    # plot FFT - 2 subplots
+    plot_ffts(waves[:2], ['phone_0.wav', 'phone_1.wav'])
+
+    # plot STFT
+    n_fft = 1024
+    wav = torch.cat(waves, dim=-1)
+    plot_spectrogram(wav, n_fft=n_fft)
+    plt.title('STFT of all phone_*.wav files')
+    plt.show()
 
 
 # --------------------------------------------------------------------------------------------------
-#     Part B        Part B        Part B        Part B        Part B        Part B        Part B    
+#     Part B        Part B        Part B        Part B        Part B        Part B        Part B
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Digit Classifier
 # --------------------------------------------------------------------------------------------------
@@ -66,12 +109,47 @@ def classify_single_digit(wav: torch.Tensor) -> int:
     Use ONLY functions from general_utilities file.
 
     Hint: try plotting the fft of all digits.
-    
+
     wav: torch tensor of the shape (1, T).
 
     return: int, digit number
     """
-    raise NotImplementedError
+    wav = wav[0]
+    plot_fft(do_fft(wav))
+    # classify the digit
+    fft = do_fft(wav)
+    fft = fft.cpu().numpy()
+    fft = np.abs(fft)
+    # fft = fft[0]
+    fft = fft[1:fft.shape[0] // 2]
+    # find the 2 maximum values
+    arg_max = np.argmax(fft)
+    fft_without_max = np.delete(fft, arg_max)
+    arg_max2 = np.argmax(fft_without_max)
+    # print (arg_max, arg_max2)
+
+
+    if 90 < arg_max < 95 and 129 < arg_max2 < 135:
+        return 0
+    elif 117 < arg_max < 123 and 66 < arg_max2 < 72:
+        return 1
+    elif 66 < arg_max < 72 and 129 < arg_max2 < 135:
+        return 2
+    elif 144 < arg_max < 150 and 66 < arg_max2 < 72:
+        return 3
+    elif 75 < arg_max < 80 and 118 < arg_max2 < 124:
+        return 4
+    elif 75 < arg_max < 80 and 131 < arg_max2 < 137:
+        return 5
+    elif 75 < arg_max < 80 and 145 < arg_max2 < 151:
+        return 6
+    elif 119 < arg_max < 125 and 83 < arg_max2 < 89:
+        return 7
+    elif 83 < arg_max < 89 and 131 < arg_max2 < 137:
+        return 8
+    elif 83 < arg_max < 89 and 145 < arg_max2 < 151:
+        return 9
+    return -1
 
 
 def classify_digit_stream(wav: torch.Tensor) -> tp.List[int]:
@@ -83,7 +161,7 @@ def classify_digit_stream(wav: torch.Tensor) -> tp.List[int]:
     padding in-between digits.
     You can assume that there will be at least 100ms of zero padding between digits
     The function should return a list of all integers pressed (in order).
-    
+
     Use STFT from general_utilities file to answer this question.
 
     wav: torch tensor of the shape (1, T).
@@ -91,4 +169,3 @@ def classify_digit_stream(wav: torch.Tensor) -> tp.List[int]:
     return: List[int], all integers pressed (in order).
     """
     raise NotImplementedError
-    

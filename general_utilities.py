@@ -74,7 +74,7 @@ def do_istft(spec: torch.Tensor, n_fft: int=1024) -> torch.Tensor:
 
     NOTE: you may need to use torch.view_as_complex.
     """
-    istft = torch.istft(spec, n_fft=n_fft, hop_length=n_fft//4, win_length=n_fft)
+    istft = torch.istft(spec, n_fft=n_fft, hop_length=n_fft//4, win_length=n_fft, return_complex=False)
     return istft
 
 
@@ -99,10 +99,15 @@ def plot_spectrogram(wav: torch.Tensor, n_fft: int=1024) -> None:
     The Y axis should include frequencies in Hz and the x axis should include time in seconds.
 
     wav: torch tensor of the shape (1, T) or (B, 1, T) for the batched case.
-    """ 
+    """
     stft = do_stft(wav, n_fft)
-    mag = torch.abs(stft)
-    plt.imshow(mag.squeeze(0).log2(), aspect='auto', origin='lower', cmap='inferno')
+    mag = torch.sqrt(stft.pow(2).sum(-1))
+    if len(mag.shape) == 3:
+        mag = mag.squeeze(0)
+    plt.imshow(mag, aspect='auto', origin='lower', cmap='inferno')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Frequency (Hz)')
+    plt.colorbar(label='Magnitude')
 
 
 def plot_fft(wav: torch.Tensor) -> None:
@@ -113,8 +118,9 @@ def plot_fft(wav: torch.Tensor) -> None:
     NOTE: As abs(FFT) reflects around zero, please plot only the POSITIVE frequencies.
 
     wav: torch tensor of the shape (1, T) or (B, 1, T) for the batched case.
-    """ 
+    """
     fft = do_fft(wav)
     mag = torch.abs(fft)
-    plt.plot(mag.squeeze(0))
+    plt.plot(mag)
+
 
