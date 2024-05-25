@@ -85,6 +85,8 @@ def do_istft(spec: torch.Tensor, n_fft: int = 1024) -> torch.Tensor:
 
     # Perform inverse STFT
     istft = torch.istft(spec, n_fft=n_fft, hop_length=n_fft // 4, win_length=n_fft)
+
+    istft = istft.unsqueeze(0) # Shape: (1, T)
     return istft
 
 
@@ -99,7 +101,7 @@ def do_fft(wav: torch.Tensor) -> torch.Tensor:
 
     returns: corresponding FFT transformation considering ONLY POSITIVE frequencies, returned tensor should be of complex dtype.
     """
-    fft = torch.fft.fft(wav)
+    fft = torch.fft.rfft(wav)
     #print argmax
     #view as real
     #fft = torch.view_as_real(fft)

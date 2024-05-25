@@ -21,6 +21,7 @@ from general_utilities import *
 # In this part we will get familiarized with the basic utilities defined in general_utilities
 # --------------------------------------------------------------------------------------------------
 
+
 def plot_ffts(signals, signals_name):
     fig, axs = plt.subplots(len(signals), 1, figsize=(10, 10))
     for i in range(len(signals)):
@@ -82,18 +83,18 @@ def audio_check_fft_stft():
     # load all phone_*.wav files
     waves = []
     for i in range(12):
-        wave, _ = load_wav(f'audio_files/phone_digits_8k/phone_{0}.wav')
+        wave, _ = load_wav(f'audio_files/phone_digits_8k/phone_{i}.wav')
         waves.append(wave)
 
     # plot FFT - 2 subplots
     plot_ffts(waves[:2], ['phone_0.wav', 'phone_1.wav'])
 
-    # plot STFT
-    n_fft = 1024
-    wav = torch.cat(waves, dim=-1)
-    plot_spectrogram(wav, n_fft=n_fft)
-    plt.title('STFT of all phone_*.wav files')
-    plt.show()
+    # # plot STFT
+    # n_fft = 1024
+    # wav = torch.cat(waves, dim=-1)
+    # plot_spectrogram(wav, n_fft=n_fft)
+    # plt.title('STFT of all phone_*.wav files')
+    # plt.show()
 
 
 # --------------------------------------------------------------------------------------------------
