@@ -95,7 +95,7 @@ def classify_single_digit(wav: torch.Tensor) -> int:
     """
     # plot the fft of all digits
     wav = wav[0]
-    plot_fft(do_fft(wav))
+    plot_fft(wav)
     # classify the digit
     fft = do_fft(wav)
     fft = fft.cpu().numpy()
