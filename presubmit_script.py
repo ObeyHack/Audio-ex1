@@ -65,14 +65,14 @@ if __name__ == "__main__":
     assert isinstance(ret, torch.Tensor) and ret.shape[-1] == 32000, "do_istft should return torch.Tensor with expected shapes"
 
 
-    digit_classifier.self_check_fft_stft()
-    digit_classifier.audio_check_fft_stft()
-
+    # digit_classifier.self_check_fft_stft()
+    # digit_classifier.audio_check_fft_stft()
+    classify_single_digit(None)
 
     # # ---- Digit Classification ----
     # test_classify_single_digit(root)
     # test_classify_digit_stream(root)
-    #
+
     # # ---- Time Stretch ----
     # test_naive_time_stretch_temporal(root)
     # test_naive_time_stretch_stft(root)

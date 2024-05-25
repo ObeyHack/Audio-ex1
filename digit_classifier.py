@@ -23,6 +23,7 @@ from general_utilities import *
 
 
 def plot_ffts(signals, signals_name):
+    # same amount of rows and columns if possible
     fig, axs = plt.subplots(len(signals), 1, figsize=(10, 10))
     for i in range(len(signals)):
         plt.sca(axs[i])
@@ -103,6 +104,28 @@ def audio_check_fft_stft():
 # Digit Classifier
 # --------------------------------------------------------------------------------------------------
 
+def plot_audios():
+    signals = []
+    for i in range(12):
+        signal, _ = load_wav(f'audio_files/phone_digits_8k/phone_{i}.wav')
+        signals.append(signal)
+
+    fig, axs = plt.subplots(3, 4, figsize=(20, 20))
+    names = [f'phone_{i}.wav' for i in range(12)]
+    for i in range(3):
+        for j in range(4):
+            plt.sca(axs[i, j])
+            axs[i, j].set_title(f"FFT({names[i * 4 + j]})")
+            axs[i, j].set_xlabel('Frequency (Hz)')
+            axs[i, j].set_ylabel('Magnitude')
+            axs[i, j].set_xlim(0, 200)
+            plot_fft(signals[i * 4 + j])
+
+    # set title
+    fig.tight_layout()
+    plt.show()
+
+
 def classify_single_digit(wav: torch.Tensor) -> int:
     """
     Q:
@@ -115,19 +138,23 @@ def classify_single_digit(wav: torch.Tensor) -> int:
 
     return: int, digit number
     """
-    wav = wav[0]
-    plot_fft(do_fft(wav))
-    # classify the digit
-    fft = do_fft(wav)
-    fft = fft.cpu().numpy()
-    fft = np.abs(fft)
-    # fft = fft[0]
-    fft = fft[1:fft.shape[0] // 2]
-    # find the 2 maximum values
-    arg_max = np.argmax(fft)
-    fft_without_max = np.delete(fft, arg_max)
-    arg_max2 = np.argmax(fft_without_max)
-    # print (arg_max, arg_max2)
+
+    # plot_audios()
+
+
+    # wav = wav[0]
+    # plot_fft(do_fft(wav))
+    # # classify the digit
+    # fft = do_fft(wav)
+    # fft = fft.cpu().numpy()
+    # fft = np.abs(fft)
+    # # fft = fft[0]
+    # fft = fft[1:fft.shape[0] // 2]
+    # # find the 2 maximum values
+    # arg_max = np.argmax(fft)
+    # fft_without_max = np.delete(fft, arg_max)
+    # arg_max2 = np.argmax(fft_without_max)
+    # # print (arg_max, arg_max2)
 
 
     if 90 < arg_max < 95 and 129 < arg_max2 < 135:
