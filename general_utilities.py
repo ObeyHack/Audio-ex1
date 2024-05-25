@@ -85,7 +85,6 @@ def do_istft(spec: torch.Tensor, n_fft: int = 1024) -> torch.Tensor:
 
     # Perform inverse STFT
     istft = torch.istft(spec, n_fft=n_fft, hop_length=n_fft // 4, win_length=n_fft)
-
     istft = istft.unsqueeze(0) # Shape: (1, T)
     return istft
 
@@ -102,11 +101,6 @@ def do_fft(wav: torch.Tensor) -> torch.Tensor:
     returns: corresponding FFT transformation considering ONLY POSITIVE frequencies, returned tensor should be of complex dtype.
     """
     fft = torch.fft.rfft(wav)
-    #print argmax
-    #view as real
-    #fft = torch.view_as_real(fft)
-    #print(fft.argmax())
-
     return fft
 
 
@@ -119,7 +113,8 @@ def plot_spectrogram(wav: torch.Tensor, n_fft: int = 1024) -> None:
     """
     stft = do_stft(wav, n_fft=n_fft)
     stft = torch.view_as_complex(stft)
-    plt.imshow(torch.abs(stft).cpu().numpy(), aspect='auto', origin='lower')
+    mags = torch.abs(stft)
+    plt.imshow(mags.squeeze(0), aspect='auto', origin='lower')
 
 
 def plot_fft(wav: torch.Tensor) -> None:
@@ -133,4 +128,6 @@ def plot_fft(wav: torch.Tensor) -> None:
     """
     # plot wav
     # plot with pandas and not with plt
-    plt.plot(torch.abs(do_fft(wav)).cpu().numpy())
+    fft = do_fft(wav)
+    mag = torch.abs(fft)
+    plt.plot(mag.squeeze(0))

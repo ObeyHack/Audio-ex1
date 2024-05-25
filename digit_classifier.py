@@ -51,8 +51,8 @@ def self_check_fft_stft():
     # create 1KHz and 3KHz sine waves
     fs = 16000
     signal_length = 3
-    sine_1Khz = create_single_sin_wave(1000, 1, fs)
-    sine_3Khz = create_single_sin_wave(3000, 1, fs)
+    sine_1Khz = create_single_sin_wave(1000, 1, fs).unsqueeze(0)
+    sine_3Khz = create_single_sin_wave(3000, 1, fs).unsqueeze(0)
     sine_1Khz_3Khz = sine_1Khz + sine_3Khz
 
     # plot FFT - 3 subplots
@@ -89,12 +89,12 @@ def audio_check_fft_stft():
     # plot FFT - 2 subplots
     plot_ffts(waves[:2], ['phone_0.wav', 'phone_1.wav'])
 
-    # # plot STFT
-    # n_fft = 1024
-    # wav = torch.cat(waves, dim=-1)
-    # plot_spectrogram(wav, n_fft=n_fft)
-    # plt.title('STFT of all phone_*.wav files')
-    # plt.show()
+    # plot STFT
+    n_fft = 1024
+    wav = torch.cat(waves, dim=-1)
+    plot_spectrogram(wav, n_fft=n_fft)
+    plt.title('STFT of all phone_*.wav files')
+    plt.show()
 
 
 # --------------------------------------------------------------------------------------------------
