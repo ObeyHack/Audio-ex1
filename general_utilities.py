@@ -43,8 +43,7 @@ def load_wav(abs_path: tp.Union[str, Path]) -> tp.Tuple[torch.Tensor, int]:
     return waveform.cpu(), sample_rate
 
 
-
-def do_stft(wav: torch.Tensor, n_fft: int=1024) -> torch.Tensor:
+def do_stft(wav: torch.Tensor, n_fft: int = 1024) -> torch.Tensor:
     """
     This function performs STFT using win_length=n_fft and hop_length=n_fft//4.
     Should return the complex spectrogram.
@@ -56,11 +55,14 @@ def do_stft(wav: torch.Tensor, n_fft: int=1024) -> torch.Tensor:
 
     returns: torch.tensor of the shape (1, n_fft, *, 2) or (B, 1, n_fft, *, 2), where last dim stands for real/imag entries.
     """
-    stft = torch.stft(wav, n_fft=n_fft, onesided=False, hop_length=n_fft//4, win_length=n_fft, return_complex=False)
+    stft = torch.stft(wav, n_fft=n_fft, hop_length=n_fft // 4, win_length=n_fft, return_complex=True)
+
+    # make real stft
+    stft = torch.view_as_real(stft)
     return stft
 
 
-def do_istft(spec: torch.Tensor, n_fft: int=1024) -> torch.Tensor:
+def do_istft(spec: torch.Tensor, n_fft: int = 1024) -> torch.Tensor:
     """
     This function performs iSTFT using win_length=n_fft and hop_length=n_fft//4.
     Should return the complex spectrogram.
@@ -74,7 +76,16 @@ def do_istft(spec: torch.Tensor, n_fft: int=1024) -> torch.Tensor:
 
     NOTE: you may need to use torch.view_as_complex.
     """
-    istft = torch.istft(spec, n_fft=n_fft, hop_length=n_fft//4, win_length=n_fft, return_complex=False)
+
+    # Remove the channel dimension for torch.istft
+    spec = spec.squeeze(1)  # Shape: (B, n_fft, num_frames, 2)
+
+    # Convert real and imaginary parts to a complex tensor
+    spec = torch.view_as_complex(spec)  # Shape: (B, n_fft, num_frames)
+
+    # Perform inverse STFT
+    istft = torch.istft(spec, n_fft=n_fft, hop_length=n_fft // 4, win_length=n_fft)
+
     return istft
 
 
@@ -89,25 +100,26 @@ def do_fft(wav: torch.Tensor) -> torch.Tensor:
 
     returns: corresponding FFT transformation considering ONLY POSITIVE frequencies, returned tensor should be of complex dtype.
     """
-    fft = torch.fft.rfft(wav)
+    fft = torch.fft.fft(wav)
+    #print argmax
+    #view as real
+    #fft = torch.view_as_real(fft)
+    #print(fft.argmax())
+
     return fft
 
 
-def plot_spectrogram(wav: torch.Tensor, n_fft: int=1024) -> None:
+def plot_spectrogram(wav: torch.Tensor, n_fft: int = 1024) -> None:
     """
     This function plots the magnitude spectrogram corresponding to a given waveform.
     The Y axis should include frequencies in Hz and the x axis should include time in seconds.
 
     wav: torch tensor of the shape (1, T) or (B, 1, T) for the batched case.
     """
-    stft = do_stft(wav, n_fft)
-    mag = torch.sqrt(stft.pow(2).sum(-1))
-    if len(mag.shape) == 3:
-        mag = mag.squeeze(0)
-    plt.imshow(mag, aspect='auto', origin='lower', cmap='inferno')
-    plt.xlabel('Time (s)')
-    plt.ylabel('Frequency (Hz)')
-    plt.colorbar(label='Magnitude')
+    stft = do_stft(wav, n_fft=n_fft)
+    stft = torch.view_as_complex(stft)
+    plt.imshow(torch.abs(stft).cpu().numpy(), aspect='auto', origin='lower')
+    plt.show()
 
 
 def plot_fft(wav: torch.Tensor) -> None:
@@ -119,8 +131,8 @@ def plot_fft(wav: torch.Tensor) -> None:
 
     wav: torch tensor of the shape (1, T) or (B, 1, T) for the batched case.
     """
-    fft = do_fft(wav)
-    mag = torch.abs(fft)
-    plt.plot(mag)
+    # plot wav
+    # plot with pandas and not with plt
 
-
+    plt.plot(torch.abs(do_fft(wav)).cpu().numpy())
+    plt.show()

@@ -39,8 +39,8 @@ def naive_time_stretch_temporal(wav: torch.Tensor, factor: float):
 def naive_time_stretch_stft(wav: torch.Tensor, factor: float):
     """
     Q:
-      write a function that converts a given waveform to stft, then uses a simple linear interpolation
-      across the temporal dimension stretching/squeezing by a given factor and converts the stretched signal
+      write a function that converts a given waveform to stft, then uses a simple linear interpolation 
+      across the temporal dimension stretching/squeezing by a given factor and converts the stretched signal 
       back using istft.
       Use general_utilities for STFT / iSTFT and imported 'interpolate'.
 
