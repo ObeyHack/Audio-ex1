@@ -85,7 +85,6 @@ def do_istft(spec: torch.Tensor, n_fft: int = 1024) -> torch.Tensor:
 
     # Perform inverse STFT
     istft = torch.istft(spec, n_fft=n_fft, hop_length=n_fft // 4, win_length=n_fft)
-
     return istft
 
 
@@ -120,7 +119,6 @@ def plot_spectrogram(wav: torch.Tensor, n_fft: int = 1024) -> None:
     stft = torch.view_as_complex(stft)
     plt.imshow(torch.abs(stft).cpu().numpy(), aspect='auto', origin='lower')
     plt.show()
-
 
 
 def plot_fft(wav: torch.Tensor) -> None:
