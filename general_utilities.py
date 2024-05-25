@@ -122,6 +122,7 @@ def plot_spectrogram(wav: torch.Tensor, n_fft: int = 1024) -> None:
     plt.show()
 
 
+
 def plot_fft(wav: torch.Tensor) -> None:
     """
     This function plots the FFT transform to a given waveform.

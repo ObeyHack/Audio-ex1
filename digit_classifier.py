@@ -37,8 +37,8 @@ def self_check_fft_stft():
     Include all plots in your PDF
     """
     # 1.
-    sine_1Khz = create_single_sin_wave(1000, 3, 16000/3)
-    sine_3Khz = create_single_sin_wave(3000, 3, 16000/3)
+    sine_1Khz = create_single_sin_wave(1000, 1, 16000)
+    sine_3Khz = create_single_sin_wave(3000, 1, 16000)
     sine_1Khz_3Khz = sine_1Khz + sine_3Khz
     # 2.
     plot_fft(sine_1Khz)
@@ -171,7 +171,7 @@ def classify_digit_stream(wav: torch.Tensor) -> tp.List[int]:
     return: List[int], all integers pressed (in order).
     """
     # plot the fft of the input waveform
-    plot_fft(do_fft(wav))
+    plot_fft(wav)
     # classify the digit stream
     stft = do_stft(wav, n_fft=1024)
     stft = stft.cpu().numpy()
