@@ -1,4 +1,5 @@
 # This is a sample Python script.
+import torch
 import torchaudio as ta
 from matplotlib import pyplot as plt
 
@@ -51,8 +52,22 @@ if __name__ == '__main__':
     #stft_stretch()
 
     # digit classification
-    for i in range(12):
-        digit = digit_classifier.classify_single_digit(load_wav(f'audio_files\\phone_digits_8k\\phone_{i}.wav')[0])
-        print(f"input: phone_{i}.wav, output: {digit}")
+    # for i in range(12):
+    #     digit = digit_classifier.classify_single_digit(load_wav(f'audio_files\\phone_digits_8k\\phone_{i}.wav')[0])
+    #     print(f"input: phone_{i}.wav, output: {digit}")
+
+    # digit stream classification
+    signals = [signal for signal in [load_wav(f'audio_files\\phone_digits_8k\\phone_{i}.wav')[0] for i in range(12)]]
+    # concat signals with least 100ms of zero padding between them
+    con_signal = signals[0]
+    for i in range(1, 12):
+        # pad by exactly 100
+        con_signal = torch.nn.functional.pad(con_signal, (0, 100))
+        con_signal = torch.cat((con_signal, signals[i]), dim=-1)
+
+    digit_stream = digit_classifier.classify_digit_stream(con_signal)
+    print(f"input: phone_0.wav to phone_11.wav, output: {digit_stream}")
+
+
 
 

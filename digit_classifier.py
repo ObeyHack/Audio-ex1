@@ -140,26 +140,7 @@ def analyse_audios():
         print(f'{i}: max freq: {max2freqs[i][0]}, 2nd max freq: {max2freqs[i][1]}\n')
 
 
-def classify_single_digit(wav: torch.Tensor) -> int:
-    """
-    Q:
-    Write a RULE-BASED (if - else..) function to classify a given single digit waveform.
-    Use ONLY functions from general_utilities file.
-
-    Hint: try plotting the fft of all digits.
-
-    wav: torch tensor of the shape (1, T).
-
-    return: int, digit number
-    """
-
-    #analyse_audios()
-    fft = do_fft(wav[0])
-    mags = np.abs(fft)
-    mags = mags[1:mags.shape[0] // 2]
-    # # find the 2 maximum values
-    arg_max, arg_max2 = argmax2(mags)
-
+def arg_maxes2digit(arg_max, arg_max2):
     if 90 < arg_max < 95 and 129 < arg_max2 < 135:
         return 0
     elif 117 < arg_max < 123 and 66 < arg_max2 < 72:
@@ -187,6 +168,28 @@ def classify_single_digit(wav: torch.Tensor) -> int:
     return -1
 
 
+def classify_single_digit(wav: torch.Tensor) -> int:
+    """
+    Q:
+    Write a RULE-BASED (if - else..) function to classify a given single digit waveform.
+    Use ONLY functions from general_utilities file.
+
+    Hint: try plotting the fft of all digits.
+
+    wav: torch tensor of the shape (1, T).
+
+    return: int, digit number
+    """
+
+    #analyse_audios()
+    fft = do_fft(wav[0])
+    mags = np.abs(fft)
+    mags = mags[1:mags.shape[0] // 2]
+    # # find the 2 maximum values
+    arg_max, arg_max2 = argmax2(mags)
+    return arg_maxes2digit(arg_max, arg_max2)
+
+
 def cut_stft(wav: torch.Tensor):
     # cut the stft to parts by the zero padding
     stft = do_stft(wav, n_fft=1024)
@@ -212,6 +215,32 @@ def cut_stft(wav: torch.Tensor):
     return stft_parts
 
 
+def concatenated2waves(wav):
+    # tuples of start and end indices of each wave
+    indices = []
+    wav = wav[0]
+    # You can assume that there will be at least 100ms of zero padding between digits
+    i = 0
+    start = 0
+    while i < len(wav):
+        if torch.all(wav[i:i + 99] == 0):
+            end = i
+            indices.append((start, end))
+
+            # move i to the next non zero value
+            i += 100
+            while i < len(wav) and wav[i] == 0:
+                i += 1
+
+            start = i
+
+        i += 1
+
+    end = len(wav)
+    indices.append((start, end))
+    return indices
+
+
 def classify_digit_stream(wav: torch.Tensor) -> tp.List[int]:
     """
     Q:
@@ -228,43 +257,22 @@ def classify_digit_stream(wav: torch.Tensor) -> tp.List[int]:
 
     return: List[int], all integers pressed (in order).
     """
+
     # plot the fft of the input waveform
-    plot_fft(wav)
-    plt.show()
-    # classify the digit stream
-    stft = do_stft(wav, n_fft=1024)
-    stft = stft.cpu().numpy()
-    stft = np.abs(stft)
-    stft = stft[0]
-    stft = stft[1:stft.shape[0] // 2]
+    indices = concatenated2waves(wav)
+    waves = [wav[0][start:end].unsqueeze(0) for start, end in indices]
     digits = []
-    stft_parts = cut_stft(wav)
-    for part in stft_parts:
-        # find 2 times that give the maximum values
-        # find argmax of the second index by the first index
-        arg_max = np.argmax(part)
-        part_without_max = np.delete(part, arg_max)
-        arg_max2 = np.argmax(part_without_max)
+    for wave in waves:
+        digit = classify_single_digit(wave)
+        digits.append(digit)
+    return digits
 
-        if 90 < arg_max < 95 and 129 < arg_max2 < 135:
-            digits.append(0)
-        elif 117 < arg_max < 123 and 66 < arg_max2 < 72:
-            digits.append(1)
-        elif 66 < arg_max < 72 and 129 < arg_max2 < 135:
-            digits.append(2)
-        elif 144 < arg_max < 150 and 66 < arg_max2 < 72:
-            digits.append(3)
-        elif 75 < arg_max < 80 and 118 < arg_max2 < 124:
-            digits.append(4)
-        elif 75 < arg_max < 80 and 131 < arg_max2 < 137:
-            digits.append(5)
-        elif 75 < arg_max < 80 and 145 < arg_max2 < 151:
-            digits.append(6)
-        elif 119 < arg_max < 125 and 83 < arg_max2 < 89:
-            digits.append(7)
-        elif 83 < arg_max < 89 and 131 < arg_max2 < 137:
-            digits.append(8)
-        elif 83 < arg_max < 89 and 145 < arg_max2 < 151:
-            digits.append(9)
 
-        return digits
+
+    # digits = []
+    # stft_parts = cut_stft(wav)
+    # for part in stft_parts:
+    #     arg_max, arg_max2 = argmax2(part)
+    #     digit = arg_maxes2digit(arg_max, arg_max2)
+    #     digits.append(digit)
+    # return digits
