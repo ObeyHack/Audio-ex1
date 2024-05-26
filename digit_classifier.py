@@ -154,7 +154,6 @@ def classify_single_digit(wav: torch.Tensor) -> int:
     """
 
     #analyse_audios()
-
     fft = do_fft(wav[0])
     mags = np.abs(fft)
     mags = mags[1:mags.shape[0] // 2]
@@ -181,6 +180,10 @@ def classify_single_digit(wav: torch.Tensor) -> int:
         return 8
     elif 82 < arg_max < 87 and 144 < arg_max2 < 148:
         return 9
+    elif 91 < arg_max < 97 and 117 < arg_max2 < 123:
+        return 10
+    elif 91 < arg_max < 97 and 145 < arg_max2 < 150:
+        return 11
     return -1
 
 
