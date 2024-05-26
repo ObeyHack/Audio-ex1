@@ -15,6 +15,7 @@ import scipy
 import numpy as np
 from general_utilities import *
 
+
 # --------------------------------------------------------------------------------------------------
 #     Part A        Part A        Part A        Part A        Part A        Part A        Part A
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -141,21 +142,18 @@ def classify_single_digit(wav: torch.Tensor) -> int:
 
     # plot_audios()
 
-
-    # wav = wav[0]
-    # plot_fft(do_fft(wav))
+    wav = wav[0]
+    # plot_fft(wav)
     # # classify the digit
-    # fft = do_fft(wav)
-    # fft = fft.cpu().numpy()
-    # fft = np.abs(fft)
-    # # fft = fft[0]
-    # fft = fft[1:fft.shape[0] // 2]
+    fft = do_fft(wav)
+    fft = fft.cpu().numpy()
+    fft = np.abs(fft)
+    fft = fft[1:fft.shape[0] // 2]
     # # find the 2 maximum values
-    # arg_max = np.argmax(fft)
-    # fft_without_max = np.delete(fft, arg_max)
-    # arg_max2 = np.argmax(fft_without_max)
-    # # print (arg_max, arg_max2)
-
+    arg_max = np.argmax(fft)
+    fft_without_max = np.delete(fft, arg_max)
+    arg_max2 = np.argmax(fft_without_max)
+    print(arg_max, arg_max2)
 
     if 90 < arg_max < 95 and 129 < arg_max2 < 135:
         return 0
@@ -165,17 +163,17 @@ def classify_single_digit(wav: torch.Tensor) -> int:
         return 2
     elif 144 < arg_max < 150 and 66 < arg_max2 < 72:
         return 3
-    elif 75 < arg_max < 80 and 118 < arg_max2 < 124:
+    elif 74 < arg_max < 79 and 117 < arg_max2 < 122:
         return 4
-    elif 75 < arg_max < 80 and 131 < arg_max2 < 137:
+    elif 74 < arg_max < 79 and 130 < arg_max2 < 135:
         return 5
-    elif 75 < arg_max < 80 and 145 < arg_max2 < 151:
+    elif 75 < arg_max < 79 and 144 < arg_max2 < 148:
         return 6
-    elif 119 < arg_max < 125 and 83 < arg_max2 < 89:
+    elif 118 < arg_max < 123 and 82 < arg_max2 < 87:
         return 7
-    elif 83 < arg_max < 89 and 131 < arg_max2 < 137:
+    elif 82 < arg_max < 87 and 131 < arg_max2 < 137:
         return 8
-    elif 83 < arg_max < 89 and 145 < arg_max2 < 151:
+    elif 82 < arg_max < 87 and 144 < arg_max2 < 148:
         return 9
     return -1
 
@@ -190,7 +188,7 @@ def cut_stft(wav: torch.Tensor):
     # find the zero padding
     zero_padding = []
     for i in range(len(stft)):
-        if stft[i:i + 99] == 0:
+        if np.all(stft[i:i + 99] == 0):
             zero_padding.append(i)
 
     stft_parts = []
@@ -199,6 +197,8 @@ def cut_stft(wav: torch.Tensor):
             stft_parts.append(stft[:zero_padding[i]])
         else:
             stft_parts.append(stft[zero_padding[i - 1]:zero_padding[i]])
+    if len(zero_padding) == 0:
+        stft_parts.append(stft)
 
     return stft_parts
 
@@ -220,7 +220,8 @@ def classify_digit_stream(wav: torch.Tensor) -> tp.List[int]:
     return: List[int], all integers pressed (in order).
     """
     # plot the fft of the input waveform
-    plot_fft(do_fft(wav))
+    plot_fft(wav)
+    plt.show()
     # classify the digit stream
     stft = do_stft(wav, n_fft=1024)
     stft = stft.cpu().numpy()
@@ -230,10 +231,12 @@ def classify_digit_stream(wav: torch.Tensor) -> tp.List[int]:
     digits = []
     stft_parts = cut_stft(wav)
     for part in stft_parts:
-        # find the 2 maximum values
+        # find 2 times that give the maximum values
+        # find argmax of the second index by the first index
         arg_max = np.argmax(part)
         part_without_max = np.delete(part, arg_max)
         arg_max2 = np.argmax(part_without_max)
+
         if 90 < arg_max < 95 and 129 < arg_max2 < 135:
             digits.append(0)
         elif 117 < arg_max < 123 and 66 < arg_max2 < 72:

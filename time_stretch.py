@@ -60,4 +60,5 @@ def naive_time_stretch_stft(wav: torch.Tensor, factor: float):
     stretched_stft_complex = interpolate(stft_complex, scale_factor=factor, mode='linear', align_corners=False)
     streched_stft=torch.stack([stretched_stft_real, stretched_stft_complex], dim=-1)
     stretched_waveform = do_istft(streched_stft)
+    stretched_waveform = stretched_waveform.squeeze(0)
     return stretched_waveform
