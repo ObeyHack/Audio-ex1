@@ -120,27 +120,24 @@ def plot_audios(signals, names):
     fig.tight_layout()
     plt.show()
 
-def max2freq(mags):
-    mags = np.squeeze(mags)
-    arg_max = np.argmax(mags)
-    max = mags[arg_max]
-    mags_without_max = np.delete(mags, arg_max)
-    arg_max2 = np.argmax(mags_without_max)
-    max2 = mags_without_max[arg_max2]
-    return arg_max, max, arg_max2, max2
+def argmax2(arr):
+    arr = np.squeeze(arr)
+    arg_max = np.argmax(arr)
+    arr_without_max = np.delete(arr, arg_max)
+    arg_max2 = np.argmax(arr_without_max)
+    return arg_max, arg_max2
 
 
 def analyse_audios():
-    signals = [load_wav(f'audio_files/phone_digits_8k/phone{i}.wav')[0] for i in range(12)]
+    signals = [load_wav(f'audio_files/phone_digits_8k/phone_{i}.wav')[0] for i in range(12)]
     names = [f'phone_{i}.wav' for i in range(12)]
     plot_audios(signals, names)
     ffts = [do_fft(signal) for signal in signals]
     mags = [torch.abs(fft) for fft in ffts]
-    max2freqs = [max2freq(mag.cpu().numpy()) for mag in mags]
+    max2freqs = [argmax2(mag.cpu().numpy()) for mag in mags]
     # each line max freq, max mag, 2nd max freq, 2nd max mag
     for i in range(12):
-        print(f'{i}: max freq: {max2freqs[i][0]}, max mag: {max2freqs[i][1]}, '
-              f'2nd max freq: {max2freqs[i][2]}, 2nd max mag: {max2freqs[i][3]}\n')
+        print(f'{i}: max freq: {max2freqs[i][0]}, 2nd max freq: {max2freqs[i][1]}\n')
 
 
 def classify_single_digit(wav: torch.Tensor) -> int:
@@ -156,20 +153,13 @@ def classify_single_digit(wav: torch.Tensor) -> int:
     return: int, digit number
     """
 
-    # analyse_audios()
+    #analyse_audios()
 
-    wav = wav[0]
-    # plot_fft(wav)
-    # # classify the digit
-    fft = do_fft(wav)
-    fft = fft.cpu().numpy()
-    fft = np.abs(fft)
-    fft = fft[1:fft.shape[0] // 2]
+    fft = do_fft(wav[0])
+    mags = np.abs(fft)
+    mags = mags[1:mags.shape[0] // 2]
     # # find the 2 maximum values
-    arg_max = np.argmax(fft)
-    fft_without_max = np.delete(fft, arg_max)
-    arg_max2 = np.argmax(fft_without_max)
-    print(arg_max, arg_max2)
+    arg_max, arg_max2 = argmax2(mags)
 
     if 90 < arg_max < 95 and 129 < arg_max2 < 135:
         return 0
