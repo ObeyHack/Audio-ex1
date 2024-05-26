@@ -105,14 +105,8 @@ def audio_check_fft_stft():
 # Digit Classifier
 # --------------------------------------------------------------------------------------------------
 
-def plot_audios():
-    signals = []
-    for i in range(12):
-        signal, _ = load_wav(f'audio_files/phone_digits_8k/phone_{i}.wav')
-        signals.append(signal)
-
+def plot_audios(signals, names):
     fig, axs = plt.subplots(3, 4, figsize=(20, 20))
-    names = [f'phone_{i}.wav' for i in range(12)]
     for i in range(3):
         for j in range(4):
             plt.sca(axs[i, j])
@@ -125,6 +119,28 @@ def plot_audios():
     # set title
     fig.tight_layout()
     plt.show()
+
+def max2freq(mags):
+    mags = np.squeeze(mags)
+    arg_max = np.argmax(mags)
+    max = mags[arg_max]
+    mags_without_max = np.delete(mags, arg_max)
+    arg_max2 = np.argmax(mags_without_max)
+    max2 = mags_without_max[arg_max2]
+    return arg_max, max, arg_max2, max2
+
+
+def analyse_audios():
+    signals = [load_wav(f'audio_files/phone_digits_8k/phone{i}.wav')[0] for i in range(12)]
+    names = [f'phone_{i}.wav' for i in range(12)]
+    plot_audios(signals, names)
+    ffts = [do_fft(signal) for signal in signals]
+    mags = [torch.abs(fft) for fft in ffts]
+    max2freqs = [max2freq(mag.cpu().numpy()) for mag in mags]
+    # each line max freq, max mag, 2nd max freq, 2nd max mag
+    for i in range(12):
+        print(f'{i}: max freq: {max2freqs[i][0]}, max mag: {max2freqs[i][1]}, '
+              f'2nd max freq: {max2freqs[i][2]}, 2nd max mag: {max2freqs[i][3]}\n')
 
 
 def classify_single_digit(wav: torch.Tensor) -> int:
@@ -140,7 +156,7 @@ def classify_single_digit(wav: torch.Tensor) -> int:
     return: int, digit number
     """
 
-    # plot_audios()
+    # analyse_audios()
 
     wav = wav[0]
     # plot_fft(wav)
