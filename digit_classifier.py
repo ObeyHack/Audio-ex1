@@ -120,7 +120,9 @@ def plot_audios(signals, names):
     fig.tight_layout()
     plt.show()
 
+
 def argmax2(arr):
+    arr = arr.clone()
     arr = np.squeeze(arr)
     arg_max = np.argmax(arr)
     arr_without_max = np.delete(arr, arg_max)
@@ -140,30 +142,30 @@ def analyse_audios():
         print(f'{i}: max freq: {max2freqs[i][0]}, 2nd max freq: {max2freqs[i][1]}\n')
 
 
-def arg_maxes2digit(arg_max, arg_max2):
-    if 90 < arg_max < 95 and 129 < arg_max2 < 135:
+def freqs2digit(fs1, fs2):
+    if (90 < fs1 < 95 and 129 < fs2 < 135) or (90 < fs2 < 95 and 129 < fs1 < 135):
         return 0
-    elif 117 < arg_max < 123 and 66 < arg_max2 < 72:
+    elif (117 < fs1 < 123 and 66 < fs2 < 72) or (117 < fs2 < 123 and 66 < fs1 < 72):
         return 1
-    elif 66 < arg_max < 72 and 129 < arg_max2 < 135:
+    elif (66 < fs1 < 72 and 129 < fs2 < 135) or (66 < fs2 < 72 and 129 < fs1 < 135):
         return 2
-    elif 144 < arg_max < 150 and 66 < arg_max2 < 72:
+    elif (144 < fs1 < 150 and 66 < fs2 < 72) or (144 < fs2 < 150 and 66 < fs1 < 72):
         return 3
-    elif 74 < arg_max < 79 and 117 < arg_max2 < 122:
+    elif (74 < fs1 < 79 and 117 < fs2 < 122) or (74 < fs2 < 79 and 117 < fs1 < 122):
         return 4
-    elif 74 < arg_max < 79 and 130 < arg_max2 < 135:
+    elif (74 < fs1 < 79 and 130 < fs2 < 135) or (74 < fs2 < 79 and 130 < fs1 < 135):
         return 5
-    elif 75 < arg_max < 79 and 144 < arg_max2 < 148:
+    elif (75 < fs1 < 79 and 144 < fs2 < 148) or (75 < fs2 < 79 and 144 < fs1 < 148):
         return 6
-    elif 118 < arg_max < 123 and 82 < arg_max2 < 87:
+    elif (118 < fs1 < 123 and 82 < fs2 < 87) or (118 < fs2 < 123 and 82 < fs1 < 87):
         return 7
-    elif 82 < arg_max < 87 and 131 < arg_max2 < 137:
+    elif (82 < fs1 < 87 and 130 < fs2 < 137) or (82 < fs2 < 87 and 130 < fs1 < 137):
         return 8
-    elif 82 < arg_max < 87 and 144 < arg_max2 < 148:
+    elif (82 < fs1 < 87 and 144 < fs2 < 148) or (82 < fs2 < 87 and 144 < fs1 < 148):
         return 9
-    elif 91 < arg_max < 97 and 117 < arg_max2 < 123:
+    elif (91 < fs1 < 97 and 117 < fs2 < 123) or (91 < fs2 < 97 and 117 < fs1 < 123):
         return 10
-    elif 91 < arg_max < 97 and 145 < arg_max2 < 150:
+    elif (91 < fs1 < 97 and 145 < fs2 < 150) or (91 < fs2 < 97 and 145 < fs1 < 150):
         return 11
     return -1
 
@@ -185,9 +187,8 @@ def classify_single_digit(wav: torch.Tensor) -> int:
     fft = do_fft(wav[0])
     mags = np.abs(fft)
     mags = mags[1:mags.shape[0] // 2]
-    # # find the 2 maximum values
     arg_max, arg_max2 = argmax2(mags)
-    return arg_maxes2digit(arg_max, arg_max2)
+    return freqs2digit(arg_max, arg_max2)
 
 
 def cut_stft(wav: torch.Tensor):
@@ -215,7 +216,7 @@ def cut_stft(wav: torch.Tensor):
     return stft_parts
 
 
-def concatenated2waves(wav):
+def concatenated2waves(wav, min_pad_length=99):
     # tuples of start and end indices of each wave
     indices = []
     wav = wav[0]
@@ -223,19 +224,17 @@ def concatenated2waves(wav):
     i = 0
     start = 0
     while i < len(wav):
-        if torch.all(wav[i:i + 99] == 0):
-            end = i
+        if torch.all(wav[i:i + min_pad_length] == 0):
+            end = i - 1
             indices.append((start, end))
 
             # move i to the next non zero value
-            i += 100
-            while i < len(wav) and wav[i] == 0:
+            i += min_pad_length
+            while wav[i] == 0 and i < len(wav):
                 i += 1
 
             start = i
-
         i += 1
-
     end = len(wav)
     indices.append((start, end))
     return indices
@@ -259,8 +258,8 @@ def classify_digit_stream(wav: torch.Tensor) -> tp.List[int]:
     """
 
     # plot the fft of the input waveform
-    indices = concatenated2waves(wav)
-    waves = [wav[0][start:end].unsqueeze(0) for start, end in indices]
+    indices = concatenated2waves(wav, min_pad_length=5)
+    waves = [wav[0][start:end+1].unsqueeze(0) for start, end in indices]
     digits = []
     for wave in waves:
         digit = classify_single_digit(wave)

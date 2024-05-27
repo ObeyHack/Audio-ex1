@@ -51,7 +51,7 @@ if __name__ == '__main__':
     #sound_stretch()
     #stft_stretch()
 
-    # digit classification
+    # # digit classification
     # for i in range(12):
     #     digit = digit_classifier.classify_single_digit(load_wav(f'audio_files\\phone_digits_8k\\phone_{i}.wav')[0])
     #     print(f"input: phone_{i}.wav, output: {digit}")
@@ -62,7 +62,7 @@ if __name__ == '__main__':
     con_signal = signals[0]
     for i in range(1, 12):
         # pad by exactly 100
-        con_signal = torch.nn.functional.pad(con_signal, (0, 100))
+        con_signal = torch.nn.functional.pad(con_signal, (0, 1000))
         con_signal = torch.cat((con_signal, signals[i]), dim=-1)
 
     digit_stream = digit_classifier.classify_digit_stream(con_signal)
