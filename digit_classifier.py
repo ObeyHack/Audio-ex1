@@ -258,7 +258,7 @@ def classify_digit_stream(wav: torch.Tensor) -> tp.List[int]:
     """
 
     # plot the fft of the input waveform
-    indices = concatenated2waves(wav, min_pad_length=5)
+    indices = concatenated2waves(wav, min_pad_length=100)
     waves = [wav[0][start:end+1].unsqueeze(0) for start, end in indices]
     digits = []
     for wave in waves:
