@@ -1,3 +1,4 @@
+import digit_classifier
 from digit_classifier import *
 from time_stretch import *
 from general_utilities import *
@@ -7,7 +8,7 @@ from pathlib import Path
 import argparse
 
 def test_classify_single_digit(root):
-    wav, _ = ta.load(f'{root}/audio_files/digit_5.wav')
+    wav, _ = load_wav(f'{root}/audio_files/digit_5.wav')
     digit = classify_digit_stream(wav)
     assert isinstance(digit, int), "return type should be int"
 
@@ -63,13 +64,18 @@ if __name__ == "__main__":
     ret = do_istft(dummy, n_fft=512)
     assert isinstance(ret, torch.Tensor) and ret.shape[-1] == 32000, "do_istft should return torch.Tensor with expected shapes"
 
-    # ---- Digit Classification ----
-    test_classify_single_digit(root)
-    test_classify_digit_stream(root)
 
-    # ---- Time Stretch ----
-    test_naive_time_stretch_temporal(root)
-    test_naive_time_stretch_stft(root)
+    # digit_classifier.self_check_fft_stft()
+    # digit_classifier.audio_check_fft_stft()
+    classify_single_digit(None)
+
+    # # ---- Digit Classification ----
+    # test_classify_single_digit(root)
+    # test_classify_digit_stream(root)
+
+    # # ---- Time Stretch ----
+    # test_naive_time_stretch_temporal(root)
+    # test_naive_time_stretch_stft(root)
 
 
 

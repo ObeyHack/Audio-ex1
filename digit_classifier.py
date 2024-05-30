@@ -23,6 +23,20 @@ from general_utilities import *
 # --------------------------------------------------------------------------------------------------
 
 
+def plot_ffts(signals, signals_name):
+    # same amount of rows and columns if possible
+    fig, axs = plt.subplots(len(signals), 1, figsize=(10, 10))
+    for i in range(len(signals)):
+        plt.sca(axs[i])
+        axs[i].set_title(f"FFT({signals_name[i]})")
+        axs[i].set_xlabel('Frequency (Hz)')
+        axs[i].set_ylabel('Magnitude')
+        plot_fft(signals[i])
+    # set title
+    fig.tight_layout()
+    plt.show()
+
+
 def self_check_fft_stft():
     """
     Q:
@@ -36,18 +50,24 @@ def self_check_fft_stft():
 
     Include all plots in your PDF
     """
-    # 1.
-    sine_1Khz = create_single_sin_wave(1000, 3, 16000)
-    sine_3Khz = create_single_sin_wave(3000, 3, 16000)
+    # create 1KHz and 3KHz sine waves
+    fs = 16000
+    signal_length = 3
+    sine_1Khz = create_single_sin_wave(1000, 1, fs).unsqueeze(0)
+    sine_3Khz = create_single_sin_wave(3000, 1, fs).unsqueeze(0)
     sine_1Khz_3Khz = sine_1Khz + sine_3Khz
-    # 2.
-    plot_fft(do_fft(sine_1Khz))
-    plot_fft(do_fft(sine_3Khz))
-    plot_fft(do_fft(sine_1Khz_3Khz))
-    # 3.
-    stft = do_stft(torch.cat([sine_1Khz, sine_3Khz, sine_1Khz_3Khz], dim=-1), n_fft=1024)
-    # plot spectrogram
-    plot_spectrogram(stft)
+
+    # plot FFT - 3 subplots
+    waves = [sine_1Khz, sine_3Khz, sine_1Khz_3Khz]
+    names = ['sine(1Khz)', 'sine(3Khz)', 'sine(1Khz) + sine(3Khz)']
+    plot_ffts(waves, names)
+
+    # plot STFT
+    n_fft = 1024
+    wav = torch.cat([sine_1Khz, sine_3Khz, sine_1Khz_3Khz], dim=-1)
+    plot_spectrogram(wav, n_fft=n_fft)
+    plt.title('STFT of [sine(1Khz), sine(3Khz), sine(1Khz) + sine(3Khz)]')
+    plt.show()
 
 
 def audio_check_fft_stft():
@@ -62,19 +82,21 @@ def audio_check_fft_stft():
 
     Include all plots in your PDF
     """
-    # 1.
-    phone_wavs = [load_wav(
-        f'C:\\Users\\merzi\\PycharmProjects\\pythonProject\\Audioex1\\audio_files\\phone_digits_8k\\phone_{i}.wav')[0]
-                  for i in range(12)]
-    # make torch.Tensor(wav) of phone_wavs
-    phone_wavs = [phone_wav[0] for phone_wav in phone_wavs]
-    # 2.
-    plot_fft(do_fft(phone_wavs[1]))
-    plot_fft(do_fft(phone_wavs[2]))
-    # 3.
-    stft = do_stft(torch.cat(phone_wavs, dim=-1), n_fft=1024)
-    # plot spectrogram
-    plot_spectrogram(stft, n_fft=1024)
+    # load all phone_*.wav files
+    waves = []
+    for i in range(12):
+        wave, _ = load_wav(f'audio_files/phone_digits_8k/phone_{i}.wav')
+        waves.append(wave)
+
+    # plot FFT - 2 subplots
+    plot_ffts(waves[:2], ['phone_0.wav', 'phone_1.wav'])
+
+    # plot STFT
+    n_fft = 1024
+    wav = torch.cat(waves, dim=-1)
+    plot_spectrogram(wav, n_fft=n_fft)
+    plt.title('STFT of all phone_*.wav files')
+    plt.show()
 
 
 # --------------------------------------------------------------------------------------------------
@@ -82,6 +104,71 @@ def audio_check_fft_stft():
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Digit Classifier
 # --------------------------------------------------------------------------------------------------
+
+def plot_audios(signals, names):
+    fig, axs = plt.subplots(3, 4, figsize=(20, 20))
+    for i in range(3):
+        for j in range(4):
+            plt.sca(axs[i, j])
+            axs[i, j].set_title(f"FFT({names[i * 4 + j]})")
+            axs[i, j].set_xlabel('Frequency (Hz)')
+            axs[i, j].set_ylabel('Magnitude')
+            axs[i, j].set_xlim(0, 200)
+            plot_fft(signals[i * 4 + j])
+
+    # set title
+    fig.tight_layout()
+    plt.show()
+
+
+def argmax2(arr):
+    arr = arr.clone()
+    arr = np.squeeze(arr)
+    arg_max = np.argmax(arr)
+    arr_without_max = np.delete(arr, arg_max)
+    arg_max2 = np.argmax(arr_without_max)
+    return arg_max, arg_max2
+
+
+def analyse_audios():
+    signals = [load_wav(f'audio_files/phone_digits_8k/phone_{i}.wav')[0] for i in range(12)]
+    names = [f'phone_{i}.wav' for i in range(12)]
+    plot_audios(signals, names)
+    ffts = [do_fft(signal) for signal in signals]
+    mags = [torch.abs(fft) for fft in ffts]
+    max2freqs = [argmax2(mag.cpu().numpy()) for mag in mags]
+    # each line max freq, max mag, 2nd max freq, 2nd max mag
+    for i in range(12):
+        print(f'{i}: max freq: {max2freqs[i][0]}, 2nd max freq: {max2freqs[i][1]}\n')
+
+
+def freqs2digit(fs1, fs2):
+    if (90 < fs1 < 95 and 129 < fs2 < 135) or (90 < fs2 < 95 and 129 < fs1 < 135):
+        return 0
+    elif (117 < fs1 < 123 and 66 < fs2 < 72) or (117 < fs2 < 123 and 66 < fs1 < 72):
+        return 1
+    elif (66 < fs1 < 72 and 129 < fs2 < 135) or (66 < fs2 < 72 and 129 < fs1 < 135):
+        return 2
+    elif (144 < fs1 < 150 and 66 < fs2 < 72) or (144 < fs2 < 150 and 66 < fs1 < 72):
+        return 3
+    elif (74 < fs1 < 79 and 117 < fs2 < 122) or (74 < fs2 < 79 and 117 < fs1 < 122):
+        return 4
+    elif (74 < fs1 < 79 and 130 < fs2 < 135) or (74 < fs2 < 79 and 130 < fs1 < 135):
+        return 5
+    elif (75 < fs1 < 79 and 144 < fs2 < 148) or (75 < fs2 < 79 and 144 < fs1 < 148):
+        return 6
+    elif (118 < fs1 < 123 and 82 < fs2 < 87) or (118 < fs2 < 123 and 82 < fs1 < 87):
+        return 7
+    elif (82 < fs1 < 87 and 130 < fs2 < 137) or (82 < fs2 < 87 and 130 < fs1 < 137):
+        return 8
+    elif (82 < fs1 < 87 and 144 < fs2 < 148) or (82 < fs2 < 87 and 144 < fs1 < 148):
+        return 9
+    elif (91 < fs1 < 97 and 117 < fs2 < 123) or (91 < fs2 < 97 and 117 < fs1 < 123):
+        return 10
+    elif (91 < fs1 < 97 and 145 < fs2 < 150) or (91 < fs2 < 97 and 145 < fs1 < 150):
+        return 11
+    return -1
+
 
 def classify_single_digit(wav: torch.Tensor) -> int:
     """
@@ -95,43 +182,13 @@ def classify_single_digit(wav: torch.Tensor) -> int:
 
     return: int, digit number
     """
-    # plot the fft of all digits
-    wav = wav[0]
-    plot_fft(do_fft(wav))
-    # classify the digit
-    fft = do_fft(wav)
-    fft = fft.cpu().numpy()
-    fft = np.abs(fft)
-    # fft = fft[0]
-    fft = fft[1:fft.shape[0] // 2]
-    # find the 2 maximum values
-    arg_max = np.argmax(fft)
-    fft_without_max = np.delete(fft, arg_max)
-    arg_max2 = np.argmax(fft_without_max)
-    # print (arg_max, arg_max2)
 
-
-    if 90 < arg_max < 95 and 129 < arg_max2 < 135:
-        return 0
-    elif 117 < arg_max < 123 and 66 < arg_max2 < 72:
-        return 1
-    elif 66 < arg_max < 72 and 129 < arg_max2 < 135:
-        return 2
-    elif 144 < arg_max < 150 and 66 < arg_max2 < 72:
-        return 3
-    elif 75 < arg_max < 80 and 118 < arg_max2 < 124:
-        return 4
-    elif 75 < arg_max < 80 and 131 < arg_max2 < 137:
-        return 5
-    elif 75 < arg_max < 80 and 145 < arg_max2 < 151:
-        return 6
-    elif 119 < arg_max < 125 and 83 < arg_max2 < 89:
-        return 7
-    elif 83 < arg_max < 89 and 131 < arg_max2 < 137:
-        return 8
-    elif 83 < arg_max < 89 and 145 < arg_max2 < 151:
-        return 9
-    return -1
+    #analyse_audios()
+    fft = do_fft(wav[0])
+    mags = np.abs(fft)
+    mags = mags[1:mags.shape[0] // 2]
+    arg_max, arg_max2 = argmax2(mags)
+    return freqs2digit(arg_max, arg_max2)
 
 
 def cut_stft(wav: torch.Tensor):
@@ -144,7 +201,7 @@ def cut_stft(wav: torch.Tensor):
     # find the zero padding
     zero_padding = []
     for i in range(len(stft)):
-        if stft[i:i + 99] == 0:
+        if np.all(stft[i:i + 99] == 0):
             zero_padding.append(i)
 
     stft_parts = []
@@ -153,8 +210,34 @@ def cut_stft(wav: torch.Tensor):
             stft_parts.append(stft[:zero_padding[i]])
         else:
             stft_parts.append(stft[zero_padding[i - 1]:zero_padding[i]])
+    if len(zero_padding) == 0:
+        stft_parts.append(stft)
 
     return stft_parts
+
+
+def concatenated2waves(wav, min_pad_length=99):
+    # tuples of start and end indices of each wave
+    indices = []
+    wav = wav[0]
+    # You can assume that there will be at least 100ms of zero padding between digits
+    i = 0
+    start = 0
+    while i < len(wav):
+        if torch.all(wav[i:i + min_pad_length] == 0):
+            end = i - 1
+            indices.append((start, end))
+
+            # move i to the next non zero value
+            i += min_pad_length
+            while wav[i] == 0 and i < len(wav):
+                i += 1
+
+            start = i
+        i += 1
+    end = len(wav)
+    indices.append((start, end))
+    return indices
 
 
 def classify_digit_stream(wav: torch.Tensor) -> tp.List[int]:
@@ -173,40 +256,22 @@ def classify_digit_stream(wav: torch.Tensor) -> tp.List[int]:
 
     return: List[int], all integers pressed (in order).
     """
-    # plot the fft of the input waveform
-    plot_fft(do_fft(wav))
-    # classify the digit stream
-    stft = do_stft(wav, n_fft=1024)
-    stft = stft.cpu().numpy()
-    stft = np.abs(stft)
-    stft = stft[0]
-    stft = stft[1:stft.shape[0] // 2]
-    digits = []
-    stft_parts = cut_stft(wav)
-    for part in stft_parts:
-        # find the 2 maximum values
-        arg_max = np.argmax(part)
-        part_without_max = np.delete(part, arg_max)
-        arg_max2 = np.argmax(part_without_max)
-        if 90 < arg_max < 95 and 129 < arg_max2 < 135:
-            digits.append(0)
-        elif 117 < arg_max < 123 and 66 < arg_max2 < 72:
-            digits.append(1)
-        elif 66 < arg_max < 72 and 129 < arg_max2 < 135:
-            digits.append(2)
-        elif 144 < arg_max < 150 and 66 < arg_max2 < 72:
-            digits.append(3)
-        elif 75 < arg_max < 80 and 118 < arg_max2 < 124:
-            digits.append(4)
-        elif 75 < arg_max < 80 and 131 < arg_max2 < 137:
-            digits.append(5)
-        elif 75 < arg_max < 80 and 145 < arg_max2 < 151:
-            digits.append(6)
-        elif 119 < arg_max < 125 and 83 < arg_max2 < 89:
-            digits.append(7)
-        elif 83 < arg_max < 89 and 131 < arg_max2 < 137:
-            digits.append(8)
-        elif 83 < arg_max < 89 and 145 < arg_max2 < 151:
-            digits.append(9)
 
-        return digits
+    # plot the fft of the input waveform
+    indices = concatenated2waves(wav, min_pad_length=100)
+    waves = [wav[0][start:end+1].unsqueeze(0) for start, end in indices]
+    digits = []
+    for wave in waves:
+        digit = classify_single_digit(wave)
+        digits.append(digit)
+    return digits
+
+
+
+    # digits = []
+    # stft_parts = cut_stft(wav)
+    # for part in stft_parts:
+    #     arg_max, arg_max2 = argmax2(part)
+    #     digit = arg_maxes2digit(arg_max, arg_max2)
+    #     digits.append(digit)
+    # return digits
