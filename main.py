@@ -65,6 +65,8 @@ if __name__ == '__main__':
         con_signal = torch.nn.functional.pad(con_signal, (0, 1000))
         con_signal = torch.cat((con_signal, signals[i]), dim=-1)
 
+    #digit_stream = digit_classifier.classify_digit_stream(con_signal)
+    #print(f"input: phone_0.wav to phone_11.wav, output: {digit_stream}")
     digit_stream = digit_classifier.classify_digit_stream(con_signal)
     print(f"input: phone_0.wav to phone_11.wav, output: {digit_stream}")
 

@@ -104,17 +104,23 @@ def do_fft(wav: torch.Tensor) -> torch.Tensor:
     return fft
 
 
-def plot_spectrogram(wav: torch.Tensor, n_fft: int = 1024) -> None:
+def plot_spectrogram(wav: torch.Tensor, n_fft: int = 1024,sr=16000) -> None:
     """
     This function plots the magnitude spectrogram corresponding to a given waveform.
     The Y axis should include frequencies in Hz and the x axis should include time in seconds.
 
     wav: torch tensor of the shape (1, T) or (B, 1, T) for the batched case.
+
+    NOTE: for the batched case multiple plots should be generated (sequentially by order in batch)
     """
     stft = do_stft(wav, n_fft=n_fft)
     stft = torch.view_as_complex(stft)
     mags = torch.abs(stft)
-    plt.imshow(mags.squeeze(0), aspect='auto', origin='lower')
+    plt.imshow(mags.squeeze(0), aspect='auto', origin='lower',extent=[0, wav.shape[-1]/sr, 0, sr/2])
+    plt.colorbar()
+    plt.xlabel('Time (s)')
+    plt.ylabel('Frequency (Hz)')
+
 
 
 def plot_fft(wav: torch.Tensor) -> None:

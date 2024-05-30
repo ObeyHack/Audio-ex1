@@ -183,7 +183,7 @@ def classify_single_digit(wav: torch.Tensor) -> int:
     return: int, digit number
     """
 
-    #analyse_audios()
+    # analyse_audios()
     fft = do_fft(wav[0])
     mags = np.abs(fft)
     mags = mags[1:mags.shape[0] // 2]
@@ -240,6 +240,80 @@ def concatenated2waves(wav, min_pad_length=99):
     return indices
 
 
+def torchall_for_stft_equal_zero(stft, i, min_pad_length):
+    # stft is a 4 dim tensor (1,512,81,2)
+    helper = torch.transpose(stft, 1, 2)
+    for j in range(i, i + min_pad_length):
+        if i + j >= helper.shape[1]:
+            return True
+        if torch.any(helper[0][i + j] > 2):
+            return False
+
+
+def check_if_stft_equal_zero_index(stft, i):
+    # stft is a 4 dim tensor (1,512,81,2)
+    helper = torch.transpose(stft, 1, 2)
+    return torch.all(helper[0][i] < 2)
+
+
+def concatenated2waves_with_stft(stft, min_pad_length=99):
+    # stft is a 4 dim tensor (1,512,81,2)
+    indices = []
+    i = 0
+    start = 0
+    while i < stft.shape[2]:
+
+        if torchall_for_stft_equal_zero(stft, i, min_pad_length):
+            end = i - 1
+            indices.append((start, end))
+            i += 1
+            if i >= stft.shape[2]:
+                break
+            while check_if_stft_equal_zero_index(stft, i) and i < stft.shape[2]:
+                i += 1
+            start = i
+        i += 1
+    end = stft.shape[2]
+    indices.append((start, end))
+    return indices
+
+
+def classify_digit_stream_with_stft(wav: torch.Tensor) -> tp.List[int]:
+    """
+    Q:
+    Write a RULE-BASED (if - else..) function to classify a waveform containing several digit stream.
+    The input waveform will include at least a single digit in it.
+    The input waveform will have digits waveforms concatenated on the temporal axis, with random zero
+    padding in-between digits.
+    You can assume that there will be at least 100ms of zero padding between digits
+    The function should return a list of all integers pressed (in order).
+
+    Use STFT from general_utilities file to answer this question.
+
+    wav: torch tensor of the shape (1, T).
+
+    return: List[int], all integers pressed (in order).
+    """
+    # calc stft
+    stft = do_stft(wav, n_fft=1024)
+    # squeeze the channel dimension
+    stft = stft.squeeze(1)
+    # represent the stft ni sciview
+    stft = torch.view_as_complex(stft)
+    stft = torch.abs(stft)
+    # plot spectrogram
+    plot_spectrogram(wav, n_fft=1024)
+    plt.show()
+    # the stft is a 4 dim tensor,we want to check if the second dim is all zeros and if so we will remove it
+    indices = concatenated2waves_with_stft(stft, min_pad_length=100)
+    waves = [wav[0][start:end + 1].unsqueeze(0) for start, end in indices]
+    digits = []
+    for wave in waves:
+        digit = classify_single_digit(wave)
+        digits.append(digit)
+    return digits
+
+
 def classify_digit_stream(wav: torch.Tensor) -> tp.List[int]:
     """
     Q:
@@ -259,14 +333,12 @@ def classify_digit_stream(wav: torch.Tensor) -> tp.List[int]:
 
     # plot the fft of the input waveform
     indices = concatenated2waves(wav, min_pad_length=100)
-    waves = [wav[0][start:end+1].unsqueeze(0) for start, end in indices]
+    waves = [wav[0][start:end + 1].unsqueeze(0) for start, end in indices]
     digits = []
     for wave in waves:
         digit = classify_single_digit(wave)
         digits.append(digit)
     return digits
-
-
 
     # digits = []
     # stft_parts = cut_stft(wav)
