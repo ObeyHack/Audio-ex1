@@ -9,7 +9,7 @@ import argparse
 
 def test_classify_single_digit(root):
     wav, _ = load_wav(f'{root}/audio_files/digit_5.wav')
-    digit = classify_digit_stream(wav)
+    digit = classify_single_digit(wav)
     assert isinstance(digit, int), "return type should be int"
 
 def test_classify_digit_stream(root):

@@ -191,32 +191,7 @@ def classify_single_digit(wav: torch.Tensor) -> int:
     return freqs2digit(arg_max, arg_max2)
 
 
-def cut_stft(wav: torch.Tensor):
-    # cut the stft to parts by the zero padding
-    stft = do_stft(wav, n_fft=1024)
-    stft = stft.cpu().numpy()
-    stft = np.abs(stft)
-    stft = stft[0]
-    stft = stft[1:stft.shape[0] // 2]
-    # find the zero padding
-    zero_padding = []
-    for i in range(len(stft)):
-        if np.all(stft[i:i + 99] == 0):
-            zero_padding.append(i)
-
-    stft_parts = []
-    for i in range(len(zero_padding)):
-        if i == 0:
-            stft_parts.append(stft[:zero_padding[i]])
-        else:
-            stft_parts.append(stft[zero_padding[i - 1]:zero_padding[i]])
-    if len(zero_padding) == 0:
-        stft_parts.append(stft)
-
-    return stft_parts
-
-
-def concatenated2waves(wav, min_pad_length=99):
+def concatenated2waves(wav, min_pad_length=1600):
     # tuples of start and end indices of each wave
     indices = []
     wav = wav[0]
@@ -240,80 +215,6 @@ def concatenated2waves(wav, min_pad_length=99):
     return indices
 
 
-def torchall_for_stft_equal_zero(stft, i, min_pad_length):
-    # stft is a 4 dim tensor (1,512,81,2)
-    helper = torch.transpose(stft, 1, 2)
-    for j in range(i, i + min_pad_length):
-        if i + j >= helper.shape[1]:
-            return True
-        if torch.any(helper[0][i + j] > 2):
-            return False
-
-
-def check_if_stft_equal_zero_index(stft, i):
-    # stft is a 4 dim tensor (1,512,81,2)
-    helper = torch.transpose(stft, 1, 2)
-    return torch.all(helper[0][i] < 2)
-
-
-def concatenated2waves_with_stft(stft, min_pad_length=99):
-    # stft is a 4 dim tensor (1,512,81,2)
-    indices = []
-    i = 0
-    start = 0
-    while i < stft.shape[2]:
-
-        if torchall_for_stft_equal_zero(stft, i, min_pad_length):
-            end = i - 1
-            indices.append((start, end))
-            i += 1
-            if i >= stft.shape[2]:
-                break
-            while check_if_stft_equal_zero_index(stft, i) and i < stft.shape[2]:
-                i += 1
-            start = i
-        i += 1
-    end = stft.shape[2]
-    indices.append((start, end))
-    return indices
-
-
-def classify_digit_stream_with_stft(wav: torch.Tensor) -> tp.List[int]:
-    """
-    Q:
-    Write a RULE-BASED (if - else..) function to classify a waveform containing several digit stream.
-    The input waveform will include at least a single digit in it.
-    The input waveform will have digits waveforms concatenated on the temporal axis, with random zero
-    padding in-between digits.
-    You can assume that there will be at least 100ms of zero padding between digits
-    The function should return a list of all integers pressed (in order).
-
-    Use STFT from general_utilities file to answer this question.
-
-    wav: torch tensor of the shape (1, T).
-
-    return: List[int], all integers pressed (in order).
-    """
-    # calc stft
-    stft = do_stft(wav, n_fft=1024)
-    # squeeze the channel dimension
-    stft = stft.squeeze(1)
-    # represent the stft ni sciview
-    stft = torch.view_as_complex(stft)
-    stft = torch.abs(stft)
-    # plot spectrogram
-    plot_spectrogram(wav, n_fft=1024)
-    plt.show()
-    # the stft is a 4 dim tensor,we want to check if the second dim is all zeros and if so we will remove it
-    indices = concatenated2waves_with_stft(stft, min_pad_length=100)
-    waves = [wav[0][start:end + 1].unsqueeze(0) for start, end in indices]
-    digits = []
-    for wave in waves:
-        digit = classify_single_digit(wave)
-        digits.append(digit)
-    return digits
-
-
 def classify_digit_stream(wav: torch.Tensor) -> tp.List[int]:
     """
     Q:
@@ -330,20 +231,16 @@ def classify_digit_stream(wav: torch.Tensor) -> tp.List[int]:
 
     return: List[int], all integers pressed (in order).
     """
+    sr = 16000
+    # plot spectrogram to know where to cut
+    plot_spectrogram(wav, sr=sr)
+    plt.show()
 
-    # plot the fft of the input waveform
-    indices = concatenated2waves(wav, min_pad_length=100)
+    pad_length = sr // 10
+    indices = concatenated2waves(wav, min_pad_length=pad_length)
     waves = [wav[0][start:end + 1].unsqueeze(0) for start, end in indices]
     digits = []
     for wave in waves:
         digit = classify_single_digit(wave)
         digits.append(digit)
     return digits
-
-    # digits = []
-    # stft_parts = cut_stft(wav)
-    # for part in stft_parts:
-    #     arg_max, arg_max2 = argmax2(part)
-    #     digit = arg_maxes2digit(arg_max, arg_max2)
-    #     digits.append(digit)
-    # return digits

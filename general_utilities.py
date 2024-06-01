@@ -45,15 +45,13 @@ def load_wav(abs_path: tp.Union[str, Path]) -> tp.Tuple[torch.Tensor, int]:
 
 def do_stft(wav: torch.Tensor, n_fft: int = 1024) -> torch.Tensor:
     """
-    This function performs STFT using win_length=n_fft and hop_length=n_fft//4.
-    Should return the complex spectrogram.
+    This function performs fast fourier trasform (FFT) .
 
-    hint: see torch.stft.
+    hint: see scipy.fft.fft / torch.fft.rfft, you can convert the input tensor to numpy just make sure to cast it back to torch.
 
-    wav: torch tensor of the shape (1, T) or (B, 1, T) for the batched case.
-    n_fft: int, denoting the number of used fft bins.
+    wav: torch tensor of the shape (1, T).
 
-    returns: torch.tensor of the shape (1, n_fft, *, 2) or (B, 1, n_fft, *, 2), where last dim stands for real/imag entries.
+    returns: corresponding FFT transformation considering ONLY POSITIVE frequencies, returned tensor should be of complex dtype.
     """
     stft = torch.stft(wav, n_fft=n_fft, hop_length=n_fft // 4, win_length=n_fft, return_complex=True)
 
@@ -104,7 +102,7 @@ def do_fft(wav: torch.Tensor) -> torch.Tensor:
     return fft
 
 
-def plot_spectrogram(wav: torch.Tensor, n_fft: int = 1024,sr=16000) -> None:
+def plot_spectrogram(wav: torch.Tensor, n_fft: int = 1024, sr=16000) -> None:
     """
     This function plots the magnitude spectrogram corresponding to a given waveform.
     The Y axis should include frequencies in Hz and the x axis should include time in seconds.

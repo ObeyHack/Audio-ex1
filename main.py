@@ -58,11 +58,15 @@ if __name__ == '__main__':
 
     # digit stream classification
     signals = [signal for signal in [load_wav(f'audio_files\\phone_digits_8k\\phone_{i}.wav')[0] for i in range(12)]]
+    fs = 16000
     # concat signals with least 100ms of zero padding between them
     con_signal = signals[0]
+
+    # 100ms of zero padding = 0.1 * fs
+    pad_max = int(0.1 * fs)
     for i in range(1, 12):
         # pad by exactly 100
-        con_signal = torch.nn.functional.pad(con_signal, (0, 1000))
+        con_signal = torch.nn.functional.pad(con_signal, (0, pad_max))
         con_signal = torch.cat((con_signal, signals[i]), dim=-1)
 
     #digit_stream = digit_classifier.classify_digit_stream(con_signal)
