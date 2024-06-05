@@ -2,11 +2,8 @@
 import torch
 import torchaudio as ta
 from matplotlib import pyplot as plt
-
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 import digit_classifier
-from general_utilities import load_wav
+from general_utilities import *
 import time_stretch
 
 
@@ -45,34 +42,37 @@ def check():
 
 
 if __name__ == '__main__':
-    #check() #works
-    #digit_classifier.self_check_fft_stft() #works
-    #digit_classifier.audio_check_fft_stft()#works
-    #sound_stretch()
-    #stft_stretch()
+    digit_classifier.self_check_fft_stft()
 
+
+    # check()
+    # digit_classifier.self_check_fft_stft() #works
+    # digit_classifier.audio_check_fft_stft()#works
+    # sound_stretch()
+    # stft_stretch()
+    #
     # # digit classification
     # for i in range(12):
     #     digit = digit_classifier.classify_single_digit(load_wav(f'audio_files\\phone_digits_8k\\phone_{i}.wav')[0])
     #     print(f"input: phone_{i}.wav, output: {digit}")
 
-    # digit stream classification
-    signals = [signal for signal in [load_wav(f'audio_files\\phone_digits_8k\\phone_{i}.wav')[0] for i in range(12)]]
-    fs = 16000
-    # concat signals with least 100ms of zero padding between them
-    con_signal = signals[0]
-
-    # 100ms of zero padding = 0.1 * fs
-    pad_max = int(0.1 * fs)
-    for i in range(1, 12):
-        # pad by exactly 100
-        con_signal = torch.nn.functional.pad(con_signal, (0, pad_max))
-        con_signal = torch.cat((con_signal, signals[i]), dim=-1)
-
-    #digit_stream = digit_classifier.classify_digit_stream(con_signal)
-    #print(f"input: phone_0.wav to phone_11.wav, output: {digit_stream}")
-    digit_stream = digit_classifier.classify_digit_stream(con_signal)
-    print(f"input: phone_0.wav to phone_11.wav, output: {digit_stream}")
+    # # digit stream classification
+    # signals = [signal for signal in [load_wav(f'audio_files\\phone_digits_8k\\phone_{i}.wav')[0] for i in range(12)]]
+    # fs = 16000
+    # # concat signals with least 100ms of zero padding between them
+    # con_signal = signals[0]
+    #
+    # # 100ms of zero padding = 0.1 * fs
+    # pad_max = int(0.1 * fs)
+    # for i in range(1, 12):
+    #     # pad by exactly 100
+    #     con_signal = torch.nn.functional.pad(con_signal, (0, pad_max))
+    #     con_signal = torch.cat((con_signal, signals[i]), dim=-1)
+    #
+    # #digit_stream = digit_classifier.classify_digit_stream(con_signal)
+    # #print(f"input: phone_0.wav to phone_11.wav, output: {digit_stream}")
+    # digit_stream = digit_classifier.classify_digit_stream(con_signal)
+    # print(f"input: phone_0.wav to phone_11.wav, output: {digit_stream}")
 
 
 

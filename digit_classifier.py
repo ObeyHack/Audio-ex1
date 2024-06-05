@@ -53,12 +53,12 @@ def self_check_fft_stft():
     # create 1KHz and 3KHz sine waves
     fs = 16000
     signal_length = 3
-    sine_1Khz = create_single_sin_wave(1000, 1, fs).unsqueeze(0)
-    sine_3Khz = create_single_sin_wave(3000, 1, fs).unsqueeze(0)
+    sine_1Khz = create_single_sin_wave(1000, signal_length, fs).unsqueeze(0)
+    sine_3Khz = create_single_sin_wave(3000, signal_length, fs).unsqueeze(0)
     sine_1Khz_3Khz = sine_1Khz + sine_3Khz
 
     # plot FFT - 3 subplots
-    waves = [sine_1Khz, sine_3Khz, sine_1Khz_3Khz]
+    waves = [sine_1Khz[0, :fs], sine_3Khz[0, :fs], sine_1Khz_3Khz[0, :fs]]
     names = ['sine(1Khz)', 'sine(3Khz)', 'sine(1Khz) + sine(3Khz)']
     plot_ffts(waves, names)
 

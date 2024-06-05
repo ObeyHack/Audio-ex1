@@ -36,7 +36,7 @@ def load_wav(abs_path: tp.Union[str, Path]) -> tp.Tuple[torch.Tensor, int]:
 
     abs_path: path to the audio file (str or Path)
     returns: (waveform, sample_rate)
-        waveform: torch.Tensor (float) of shape [1, num_channels]
+        waveform: torch.Tensor (float) of shape [num_channels, T]
         sample_rate: int, the corresponding sample rate
     """
     waveform, sample_rate = ta.load(abs_path)
