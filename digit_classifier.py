@@ -233,8 +233,8 @@ def classify_digit_stream(wav: torch.Tensor) -> tp.List[int]:
     """
     sr = 16000
     # plot spectrogram to know where to cut
-    plot_spectrogram(wav, sr=sr)
-    plt.show()
+    # plot_spectrogram(wav, sr=sr)
+    # plt.show()
 
     pad_length = sr // 10
     indices = concatenated2waves(wav, min_pad_length=pad_length)
